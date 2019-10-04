@@ -44,8 +44,9 @@ async function accessSpreadsheet() {
             fs.writeFile(path.join(__dirname, `Факультеты/${fac}/${student.name}.txt`), printStudent(student), function (err) {
                 if (err) throw err;
             });
-            await getFile(student.motivationLink.split('.')[0]);
-            console.log('   ');
+            student.motivationLink.forEach(async link => {
+                await getFile(link.trim());
+            })
         })
     });
 }
@@ -76,7 +77,7 @@ function parseStudent(student) {
         speciality: student['планируемаяыеспециальностьи'].split(','),
         studyBefore: student['тыужеучаствовалвпроектестудентбгунанеделю'].toLowerCase() === 'да' ? true : false,
         whichFaculty: student['еслидатонакакомфакультетеидокакогоэтапатыпрошелотправилмотивационноеписьмовыполнилзадания2турасталстудентомбгунанеделю'],
-        motivationLink: student['прикрепимотивационноеписьмонатемупочемуяхочустатьстудентомбгунанеделю'],
+        motivationLink: student['прикрепимотивационноеписьмонатемупочемуяхочустатьстудентомбгунанеделю'].split(','),
         mail: student['адресэлектроннойпочты'],
     }
 }
@@ -98,6 +99,7 @@ async function getFile(link) {
 
 
     let id = link.split('=')[1]
+    console.log(id);
     let test = fs.createWriteStream(`./Test/${getFileName(id)}`)
 
     const res = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`, {
