@@ -4,11 +4,16 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "test": "xo",
+    "build": "electron-packager . Student --platform=win32 --arch=x64"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "app": "^0.1.0",
+    "async-mkdirp": "^1.2.7",
+    "browser-window": "^0.4.0",
     "electron": "^6.0.11",
     "fs": "0.0.1-security",
     "google-spreadsheet": "^2.0.8",
@@ -16,5 +21,18 @@
     "mkdirp": "^0.5.1",
     "path": "^0.12.7",
     "rimraf": "^3.0.0"
+  },
+  "xo": {
+    "space": 2,
+    "envs": [
+      "node",
+      "browser"
+    ],
+    "ignores": [
+      "dist/**"
+    ]
+  },
+  "devDependencies": {
+    "xo": "^0.25.3"
   }
 }

@@ -6,10 +6,17 @@
         <meta http-equiv="X-UA-Compatible" content="ie=edge">
         <title>Student Form</title>
         <script src="./form.js"></script>
+        <link rel="stylesheet" href="./style.css">
     </head>
     <body>
-        <h1>Check</h1>
-        <button onclick="accessSpreadsheet()">Start</button>
+        <p>Вставьте ссылку на таблицу с включённым режимом общего просмотра</p>
+        <input id="link">
+        <button onclick="addFacultyFolder(this)">Start</button>
+        <div>
+            <h1 id='done' class="hidden">Всё готово!</h1>
+            <p id='doneFolder'></p>
+            <p id='error'></p>
+        </div>
         <script>
             require('./render.js');
         </script>

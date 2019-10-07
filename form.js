@@ -1,6 +1,7 @@
 const GoogleSpreadsheet = require('google-spreadsheet');
 const { promisify } = require('util');
-const mkdirp = require('mkdirp');
+// const mkdirp = require('mkdirp');
+const mkdirp = require('async-mkdirp');
 const path = require('path');
 const rimraf = require("rimraf");
 const fs = require('fs');
@@ -11,9 +12,8 @@ const { app, BrowserWindow } = require('electron');
 const creds = require('./secret2.json');
 const faculties = new Map();
 
-async function accessSpreadsheet() {
-    console.log(1);
-    const doc = new GoogleSpreadsheet('1kCK4YoxAvDCkiq6f547Osyy0LWFmmdRB947XfuytiQM');
+async function accessSpreadsheet(id) {
+    const doc = new GoogleSpreadsheet(id);
     await promisify(doc.useServiceAccountAuth)(creds);
     const info = await promisify(doc.getInfo)()
     const sheet = info.worksheets[0];
@@ -31,14 +31,20 @@ async function accessSpreadsheet() {
             }
         })
     })
-    await rimraf.sync(path.join(__dirname, 'Факультеты'));
-    mkdirp(path.join(__dirname, `Факультеты`))
-    faculties.forEach((students, fac) => {
-        mkdirp(path.join(__dirname, `Факультеты/${fac}`))
+    await rimraf.sync(path.join(__dirname, '../../Факультеты'));
+    await mkdirp(path.join(__dirname, `../../Факультеты`))
+    faculties.forEach(async (students, fac) => {
+        await mkdirp(path.join(__dirname, `../../Факультеты/${fac}`))
         students.forEach(student => {
-            fs.writeFile(path.join(__dirname, `Факультеты/${fac}/${student.name}.txt`), printStudent(student), function (err) {
-                if (err) throw err;
-            });
+            try{
+                fs.writeFile(path.join(__dirname, `../../Факультеты/${fac}/${student.name}.txt`), printStudent(student), function (err) {
+                    if (err) {
+                        throw err;
+                    }
+                }); 
+            } catch(err){
+                document.getElementById('error').innerHTML = err;
+            }
         })
     });
 }
@@ -72,6 +78,32 @@ function parseStudent(student) {
         motivationLink: student['прикрепимотивационноеписьмонатемупочемуяхочустатьстудентомбгунанеделю'],
         mail: student['адресэлектроннойпочты'],
     }
+}
+
+async function addFacultyFolder(obj) {
+    obj.disabled = true;
+    let link = document.getElementById('link').value.split('/');
+    let id = '';
+    link.forEach((value, index) => {
+        if (value === 'd') {
+            id = link[index + 1];
+        }
+    })
+    if (id.length) {
+        try {
+            await accessSpreadsheet(id);
+            console.log('finish');
+            document.getElementById('done').classList.remove('hidden');
+            document.getElementById('doneFolder').innerHTML = `Путь к папкам факультетов: ${path.join(__dirname, '../../Факультеты')}`;
+            document.getElementById('error').innerHTML = '';
+        } catch (err) {
+            document.getElementById('error').innerHTML = err;
+        }
+    } else {
+        console.log('err');
+    }
+    obj.disabled = false;
+
 }
 
 // accessSpreadsheet();
