@@ -1,6 +1,6 @@
 const GoogleSpreadsheet = require('google-spreadsheet');
 const { promisify } = require('util');
-const mkdirp = require('mkdirp');
+const mkdirp = require('async-mkdirp');
 const path = require('path');
 const rimraf = require("rimraf");
 const fs = require('fs');
@@ -47,60 +47,28 @@ async function accessSpreadsheet() {
     })
     await rimraf.sync(path.join(__dirname, 'Факультеты'));
     await rimraf.sync(path.join(__dirname, 'Test'));
-    mkdirp(path.join(__dirname, `Факультеты`))
-    mkdirp(path.join(__dirname, `Test`))
-    // faculties.forEach((students, fac) => {
-    //     mkdirp(path.join(__dirname, `Факультеты/${fac}`))
-    //     students.forEach(async student => {
-    //         fs.writeFile(path.join(__dirname, `Факультеты/${fac}/${student.name}.txt`), printStudent(student), function (err) {
-    //             if (err) throw err;
-    //         });
-    //         student.motivationLink.forEach(link => {
-    //             getFile(link.trim());
-    //             // await wait(500);
-    //         })
-
-    //         // asyncForEach(student.motivationLink, async link => {
-    //         //     await getFile(link.trim());
-    //         //     await wait(500);
-    //         // })
-    //     })
-    // });
+    await mkdirp(path.join(__dirname, `Факультеты`))
+    await mkdirp(path.join(__dirname, `Test`))
 
     await Promise.all(Array.from(faculties).map(async faculty => {
-        mkdirp(path.join(__dirname, `Факультеты/${faculty[0]}`))
+        await mkdirp(path.join(__dirname, `Факультеты/${faculty[0]}`))
 
-        await Promise.all(faculty[1].map(async student =>{
-            fs.writeFile(path.join(__dirname, `Факультеты/${faculty[0]}/${student.name}.txt`), printStudent(student), function (err) {
+        await Promise.all(faculty[1].map(async (student, index) =>{
+            await mkdirp(path.join(__dirname, `Факультеты/${faculty[0]}/${abr[faculty[0]]}-${index}`))
+            fs.writeFile(path.join(__dirname, `Факультеты/${faculty[0]}/${abr[faculty[0]]}-${index}/${student.name}.txt`), printStudent(student), function (err) {
                 if (err) throw err;
             });
 
             await Promise.all(student.motivationLink.map(async link => {
-                await getFile(link.trim(), faculty[0], student.name);
-                // await wait(500);
+                await getFile(link.trim(), faculty[0], student.name, index);
             }))
 
         }))
 
-        // faculty[1].forEach(async student => {
-        //     fs.writeFile(path.join(__dirname, `Факультеты/${faculty[0]}/${student.name}.txt`), printStudent(student), function (err) {
-        //         if (err) throw err;
-        //     });
-        //     // student.motivationLink.forEach(link => {
-        //     //     getFile(link.trim());
-        //     //     // await wait(500);
-        //     // })
-        // })
     }))
-    // motivationLinks.map(link => console.log(link));
-    // let num = 0;
-    // await Promise.all(motivationLinks.map(async link => {
-    //     const file = await getMotivation(link);
-    //     // console.log(file);
-    //     // console.log(num);
-    //     // num++;
-    // })).catch(err => console.log(12, err))
-    // console.log('Done2!');
+    fs.writeFile(path.join(__dirname, `log.txt`), JSON.stringify(motivationLinks), function (err) {
+        if (err) throw err;
+    })
     testLinks();
 }
 let downloaded = 0;
@@ -108,7 +76,6 @@ function testLinks() {
     if(downloaded < motivationLinks.length){
         getMotivation(motivationLinks[downloaded])
         downloaded++;
-        console.log(1);
         setTimeout(() => {
             testLinks()
         }, 500)
@@ -117,8 +84,14 @@ function testLinks() {
 
 
 async function getMotivation(link) {
-    await getMotivationFile(link.id, link.link, link.fac, link.name);
+    await getMotivationFile(link.id, link.link, link.fac, link.name, link.index);
     return 'Done!';
+}
+
+function printLink(links) {
+    const { id, link, fac, name, index } = links;
+
+    return JSON.stringify(links)
 }
 
 function printStudent(student) {
@@ -152,7 +125,6 @@ function parseStudent(student) {
     }
 }
 
-accessSpreadsheet();
 
 const scopes = [
     'https://www.googleapis.com/auth/drive'
@@ -164,45 +136,25 @@ const auth = new google.auth.JWT(
 
 const drive = google.drive({ version: 'v3', auth });
 
-async function getFile(link, fac, name) {
-    
-    // console.log(token);
-
-
+async function getFile(link, fac, name, index) {
     let id = link.split('=')[1]
-    // console.log(id);
-    // let name = await getFileName(id);
     motivationLinks.push({
         id: id,
         link: `https://www.googleapis.com/drive/v3/files/${id}?alt=media`,
         fac,
-        name
+        name,
+        index: index
     })
-    // console.log(motivationLinks);
-    // let test = fs.createWriteStream(`./Test/${name}`)
-
-    // const res = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`, {
-    //     method: 'GET',
-    //     headers: {
-    //         "authorization": `Bearer ${token.token}`
-    //     }
-    // });
-    // if (!res.ok) {
-    //     throw new Error(`Could not fetch ${`https://www.googleapis.com/drive/v3/files/${id}?alt=media`}, received ${res.status}`);
-    // }
-
-    // res.body.pipe(test);
-
 }
 
-async function getMotivationFile(id, link, fac, studentName) {
+async function getMotivationFile(id, link, fac, studentName, index) {
 
     let token = await auth.getAccessToken();
     let name = await getFileName(id, studentName);
     if(name) {
         await waitFor(1000);
-        mkdirp(path.join(__dirname, `Test/${fac}`))
-        let test = fs.createWriteStream(`./Test/${fac}/${name}`)
+        // await mkdirp(path.join(__dirname, `Test/${fac}`))
+        let test = fs.createWriteStream(`./Факультеты/${fac}/${abr[fac]}-${index}/${name}`)
         try {
             const res = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`, {
                 method: 'GET',
@@ -211,6 +163,7 @@ async function getMotivationFile(id, link, fac, studentName) {
                 }
             });
             res.body.pipe(test);
+            // console.log(downloaded / motivationLinks.length * 100, '%')
         } catch (err) {
             console.log(13, err)
         }
@@ -219,26 +172,37 @@ async function getMotivationFile(id, link, fac, studentName) {
     }
 }
 
-// getFile('https://drive.google.com/open?id=17K3aKZ_cq80g5w-aJB9jVGYchdx57fg-');
-
-
 async function getFileName(id, studentName) {
-    // let test = fs.createWriteStream('./test.doc')
     let name = await drive.files.get({
         fileId: id,
-        // mimeType: ['application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/pdf', 'application/vnd.google-apps.document']
     }).catch(err => console.log(err));
-    // console.log(name.data.name)
     if (name) {
         let fileName = name.data.name.split('.');
         return `${studentName}.${fileName[fileName.length - 1]}`;
     } else {
         return null;
     }
-    
-    // res.pipe(test);
-    // drive.files.g
-    // console.log(res);
 }
 
-// getFileName('17K3aKZ_cq80g5w-aJB9jVGYchdx57fg-');
+accessSpreadsheet();
+
+const abr = {
+    'Механико-математический факультет': 'ММФ',
+    'Биологический факультет': 'БИО',
+    'Факультет географии и геоинформатики': 'ГЕО',
+    'Институт бизнеса': 'ИБ',
+    'Институт теологии': 'ТЕО',
+    'Исторический факультет': 'ИСТ',
+    'МГЭИ им. А.Д. Сахарова': 'МГЭИ',
+    'Факультет журналистики': 'ФЖ',
+    'Факультет международных отношений': 'ФМО',
+    'Факультет прикладной математики и информатики': 'ФПМИ',
+    'Факультет радиофизики и компьютерных технологий': 'РФиКТ',
+    'Факультет социокультурных коммуникаций': 'ФСК',
+    'Факультет философии и социальных наук': 'ФФСН',
+    'Физический факультет': 'ФИЗ',
+    'Филологический факультет': 'ФИЛ',
+    'Химический факультет': 'ХИМ',
+    'Экономический факультет': 'ЭФ',
+    'Географический факультет': 'ГЕО'
+}
