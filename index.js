@@ -6,37 +6,36 @@ const rimraf = require("rimraf");
 const fs = require('fs');
 
 const url = require('url');
-const { app, BrowserWindow } = require('electron');
-
 const creds = require('./secret2.json');
 const faculties = new Map();
 
-let win;
+const { app, BrowserWindow } = require('electron');
 
-function createWindow() {
-    win = new BrowserWindow({
-        width: 700,
-        height: 500,
-        icon: __dirname + '/img/icon.jpg'
-    })
+var mainWindow = null;
 
-    win.loadURL(url.format({
+app.on('window-all-closed', function () {
+    if (process.platform !== 'darwin') {
+        app.quit();
+    }
+});
+
+app.on('ready', function () {
+    mainWindow = new BrowserWindow({
+        width: 800,
+        height: 600,
+        webPreferences: {
+            nodeIntegration: true
+        }
+    });
+    mainWindow.loadURL(url.format({
         pathname: path.join(__dirname, 'index.html'),
         protocol: 'file',
         slashes: true
     }))
 
+    // mainWindow.webContents.openDevTools();
 
-    win.webContents.openDevTools();
-
-    win.on('closed', () => {
-        win = null;
+    mainWindow.on('closed', function () {
+        mainWindow = null;
     });
-}
-
-app.on('ready', createWindow);
-
-app.on('window-all-closed', () => {
-    app.quit();
-})
-
+});

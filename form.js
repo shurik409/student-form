@@ -1,5 +1,6 @@
 const GoogleSpreadsheet = require('google-spreadsheet');
 const { promisify } = require('util');
+
 const mkdirp = require('async-mkdirp');
 const path = require('path');
 const rimraf = require("rimraf");
@@ -27,7 +28,6 @@ const motivationLinks = [];
 
 async function accessSpreadsheet(id) {
     const doc = new GoogleSpreadsheet(id);
-
     await promisify(doc.useServiceAccountAuth)(creds);
     const info = await promisify(doc.getInfo)()
     const sheet = info.worksheets[0];
@@ -49,6 +49,7 @@ async function accessSpreadsheet(id) {
             }
         })
     })
+
     await rimraf.sync(path.join(__dirname, 'Факультеты'));
     await mkdirp(path.join(__dirname, `Факультеты`))
 
@@ -90,7 +91,6 @@ function getName(student) {
         } else {
             name += `${abrName}-${1} `
         }
-
     });
 
     console.log(name.trim());
@@ -154,7 +154,6 @@ function parseStudent(student) {
         mail: student['адресэлектроннойпочты'],
     }
 }
-
 
 const scopes = [
     'https://www.googleapis.com/auth/drive'
