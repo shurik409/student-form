@@ -33,7 +33,7 @@ async function accessSpreadsheet() {
     const sheet = info.worksheets[0];
 
     const rows = await promisify(sheet.getRows)({
-        offset: 1
+        offset: 0
     });
     rows.forEach(row => {
         let student = parseStudent(row);
@@ -70,9 +70,9 @@ async function accessSpreadsheet() {
         }))
 
     }))
-    fs.writeFile(path.join(__dirname, `log.txt`), JSON.stringify(motivationLinks), function (err) {
-        if (err) throw err;
-    })
+    // fs.writeFile(path.join(__dirname, `log.txt`), JSON.stringify(motivationLinks), function (err) {
+    //     if (err) throw err;
+    // })
     testLinks();
 }
 
@@ -106,7 +106,7 @@ function testLinks() {
             testLinks()
         }, 300)
     }   
-    
+
     console.log(`${ downloaded / motivationLinks.length * 100 } %`)
 }
 
