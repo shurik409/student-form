@@ -25,9 +25,8 @@ const asyncForEach = async (array, callback) => {
 
 const motivationLinks = [];
 
-async function accessSpreadsheet() {
-    console.log(1);
-    const doc = new GoogleSpreadsheet('1kCK4YoxAvDCkiq6f547Osyy0LWFmmdRB947XfuytiQM');
+async function accessSpreadsheet(id) {
+    const doc = new GoogleSpreadsheet(id);
 
     await promisify(doc.useServiceAccountAuth)(creds);
     const info = await promisify(doc.getInfo)()
@@ -51,18 +50,20 @@ async function accessSpreadsheet() {
         })
     })
     await rimraf.sync(path.join(__dirname, 'Факультеты'));
-    await rimraf.sync(path.join(__dirname, 'Test'));
     await mkdirp(path.join(__dirname, `Факультеты`))
-    await mkdirp(path.join(__dirname, `Test`))
 
     await Promise.all(Array.from(faculties).map(async faculty => {
         await mkdirp(path.join(__dirname, `Факультеты/${faculty[0]}`))
 
         await Promise.all(faculty[1].map(async (student, index) =>{
             await mkdirp(path.join(__dirname, `Факультеты/${faculty[0]}/${abr[faculty[0]]}-${index + 1}`))
-            fs.writeFile(path.join(__dirname, `Факультеты/${faculty[0]}/${abr[faculty[0]]}-${index + 1}/${student.indexName}.txt`), printStudent(student), function (err) {
-                if (err) throw err;
-            });
+            try{
+                fs.writeFile(path.join(__dirname, `Факультеты/${faculty[0]}/${abr[faculty[0]]}-${index + 1}/${student.indexName}.txt`), printStudent(student), function (err) {
+                    if (err) throw err;
+                });
+            } catch(err){
+                document.getElementById('error').innerHTML = err;
+            }
 
             await Promise.all(student.motivationLink.map(async (link, indexLink) => {
                 await getFile(link.trim(), faculty[0], student.name, index, student.indexName, indexLink);
@@ -214,7 +215,33 @@ async function getFileName(id, studentName) {
     }
 }
 
-accessSpreadsheet();
+async function addFacultyFolder(obj) {
+    obj.disabled = true;
+    let link = document.getElementById('link').value.split('/');
+    let id = '';
+    link.forEach((value, index) => {
+        if (value === 'd') {
+            id = link[index + 1];
+        }
+    })
+    if (id.length) {
+        try {
+            await accessSpreadsheet(id);
+            console.log('finish');
+            document.getElementById('done').classList.remove('hidden');
+            document.getElementById('doneFolder').innerHTML = `Путь к папкам факультетов: ${path.join(__dirname, '../../Факультеты')}`;
+            document.getElementById('error').innerHTML = '';
+        } catch (err) {
+            document.getElementById('error').innerHTML = err;
+        }
+    } else {
+        console.log('err');
+    }
+    obj.disabled = false;
+
+}
+
+// accessSpreadsheet();
 
 const abr = {
     'Механико-математический факультет': 'ММФ',
