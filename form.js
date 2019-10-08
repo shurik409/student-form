@@ -37,11 +37,15 @@ async function accessSpreadsheet() {
     });
     rows.forEach(row => {
         let student = parseStudent(row);
+        let studentName = getName(student);
         student.faculty.forEach(fac => {
-            if (faculties.get(fac.trim())){
-                faculties.get(fac.trim()).push(student);
+            const facName = fac.trim();
+            const faculty = faculties.get(facName);
+
+            if (faculty){
+                faculty.push({ ...student, indexName: studentName });
             } else {
-                faculties.set(fac.trim(), [ student ])
+                faculties.set(facName, [ { ...student, indexName: studentName } ])
             }
         })
     })
@@ -54,13 +58,13 @@ async function accessSpreadsheet() {
         await mkdirp(path.join(__dirname, `Факультеты/${faculty[0]}`))
 
         await Promise.all(faculty[1].map(async (student, index) =>{
-            await mkdirp(path.join(__dirname, `Факультеты/${faculty[0]}/${abr[faculty[0]]}-${index}`))
-            fs.writeFile(path.join(__dirname, `Факультеты/${faculty[0]}/${abr[faculty[0]]}-${index}/${student.name}.txt`), printStudent(student), function (err) {
+            await mkdirp(path.join(__dirname, `Факультеты/${faculty[0]}/${abr[faculty[0]]}-${index + 1}`))
+            fs.writeFile(path.join(__dirname, `Факультеты/${faculty[0]}/${abr[faculty[0]]}-${index + 1}/${student.indexName}.txt`), printStudent(student), function (err) {
                 if (err) throw err;
             });
 
-            await Promise.all(student.motivationLink.map(async link => {
-                await getFile(link.trim(), faculty[0], student.name, index);
+            await Promise.all(student.motivationLink.map(async (link, indexLink) => {
+                await getFile(link.trim(), faculty[0], student.name, index, student.indexName, indexLink);
             }))
 
         }))
@@ -71,20 +75,44 @@ async function accessSpreadsheet() {
     })
     testLinks();
 }
+
+function getName(student) {
+    let name = '';
+    student.faculty.forEach(fac => {
+        let facName = fac.trim();
+        let abrName = abr[facName];
+        const faculty = faculties.get(facName);
+
+        if (faculty) {
+            name += `${abrName}-${faculty.length + 1} `
+        } else {
+            name += `${abrName}-${1} `
+        }
+
+    });
+
+    console.log(name.trim());
+
+    return name.trim();
+}
+
 let downloaded = 0;
+
 function testLinks() {
     if(downloaded < motivationLinks.length){
         getMotivation(motivationLinks[downloaded])
         downloaded++;
         setTimeout(() => {
             testLinks()
-        }, 500)
+        }, 300)
     }   
+    
+    console.log(`${ downloaded / motivationLinks.length * 100 } %`)
 }
 
 
 async function getMotivation(link) {
-    await getMotivationFile(link.id, link.link, link.fac, link.name, link.index);
+    await getMotivationFile(link.id, link.link, link.fac, link.name, link.index, link.indexName, link.indexLink);
     return 'Done!';
 }
 
@@ -118,7 +146,7 @@ function parseStudent(student) {
         city: student['городпроживания'],
         faculty: student['планируемыйыефакультеты'].split(','),
         speciality: student['планируемаяыеспециальностьи'].split(','),
-        studyBefore: student['тыужеучаствовалвпроектестудентбгунанеделю'].toLowerCase() === 'да' ? true : false,
+        studyBefore: student['тыужеучаствовалвпроектестудентбгунанеделю'],
         whichFaculty: student['еслидатонакакомфакультетеидокакогоэтапатыпрошелотправилмотивационноеписьмовыполнилзадания2турасталстудентомбгунанеделю'],
         motivationLink: student['прикрепимотивационноеписьмонатемупочемуяхочустатьстудентомбгунанеделю'].split(','),
         mail: student['адресэлектроннойпочты'],
@@ -136,25 +164,26 @@ const auth = new google.auth.JWT(
 
 const drive = google.drive({ version: 'v3', auth });
 
-async function getFile(link, fac, name, index) {
+async function getFile(link, fac, name, index, indexName, indexLink) {
     let id = link.split('=')[1]
     motivationLinks.push({
         id: id,
         link: `https://www.googleapis.com/drive/v3/files/${id}?alt=media`,
         fac,
         name,
-        index: index
+        index: index,
+        indexName: indexName,
+        indexLink
     })
 }
 
-async function getMotivationFile(id, link, fac, studentName, index) {
-
+async function getMotivationFile(id, link, fac, studentName, index, indexName, indexLink) {
     let token = await auth.getAccessToken();
-    let name = await getFileName(id, studentName);
+    let name = await getFileName(id, `Мотивация-${indexLink + 1}`);
     if(name) {
         await waitFor(1000);
         // await mkdirp(path.join(__dirname, `Test/${fac}`))
-        let test = fs.createWriteStream(`./Факультеты/${fac}/${abr[fac]}-${index}/${name}`)
+        let test = fs.createWriteStream(`./Факультеты/${fac}/${abr[fac]}-${index + 1}/${name}`)
         try {
             const res = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`, {
                 method: 'GET',
@@ -194,6 +223,7 @@ const abr = {
     'Институт теологии': 'ТЕО',
     'Исторический факультет': 'ИСТ',
     'МГЭИ им. А.Д. Сахарова': 'МГЭИ',
+    'МГЭИ им. А. Д. Сахарова': 'МГЭИ',
     'Факультет журналистики': 'ФЖ',
     'Факультет международных отношений': 'ФМО',
     'Факультет прикладной математики и информатики': 'ФПМИ',

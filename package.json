@@ -8,7 +8,7 @@
   },
   "author": "",
   "license": "ISC",
-  "dependencies": {
+  "devDependencies": {
     "async-mkdirp": "^1.2.7",
     "bootstrap": "^4.3.1",
     "electron": "^6.0.11",
