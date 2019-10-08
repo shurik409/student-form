@@ -28,6 +28,7 @@ const motivationLinks = [];
 async function accessSpreadsheet() {
     console.log(1);
     const doc = new GoogleSpreadsheet('1kCK4YoxAvDCkiq6f547Osyy0LWFmmdRB947XfuytiQM');
+
     await promisify(doc.useServiceAccountAuth)(creds);
     const info = await promisify(doc.getInfo)()
     const sheet = info.worksheets[0];
@@ -140,14 +141,14 @@ function printStudent(student) {
 function parseStudent(student) {
     return {
         name: student['фио'],
-        link: student['ссылканааккаунтвсоциальнойсетивконтакте'],
+        link: student['ссылканааккаунтвсоциальнойсетивконтакте'] || student['ссылканааккаунтввконтакте'],
         phone: student['мобильныйтелефон'],
-        school: student['учреждениеобразованиясредняяшколагимназиялицейкласс'],
+        school: student['учреждениеобразованиясредняяшколагимназиялицейкласс'] || student['учреждениеобразованиясредняяшколагимназиялицейссузкласс'],
         city: student['городпроживания'],
         faculty: student['планируемыйыефакультеты'].split(','),
         speciality: student['планируемаяыеспециальностьи'].split(','),
         studyBefore: student['тыужеучаствовалвпроектестудентбгунанеделю'],
-        whichFaculty: student['еслидатонакакомфакультетеидокакогоэтапатыпрошелотправилмотивационноеписьмовыполнилзадания2турасталстудентомбгунанеделю'],
+        whichFaculty: student['еслидатонакакомфакультетеидокакогоэтапатыпрошелотправилмотивационноеписьмовыполнилзадания2турасталстудентомбгунанеделю'] || student['еслидатонакакомфакультетеидокакогоэтапатыпрошел'],
         motivationLink: student['прикрепимотивационноеписьмонатемупочемуяхочустатьстудентомбгунанеделю'].split(','),
         mail: student['адресэлектроннойпочты'],
     }
