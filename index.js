@@ -1,6 +1,5 @@
 const GoogleSpreadsheet = require('google-spreadsheet');
 const { promisify } = require('util');
-const mkdirp = require('mkdirp');
 const path = require('path');
 const rimraf = require("rimraf");
 const fs = require('fs');

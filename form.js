@@ -50,16 +50,16 @@ async function accessSpreadsheet(id) {
         })
     })
 
-    await rimraf.sync(path.join(__dirname, 'Факультеты'));
-    await mkdirp(path.join(__dirname, `Факультеты`))
+    await rimraf.sync(path.join(__dirname, '../../Факультеты'));
+    await mkdirp(path.join(__dirname, `../../Факультеты`))
 
     await Promise.all(Array.from(faculties).map(async faculty => {
-        await mkdirp(path.join(__dirname, `Факультеты/${faculty[0]}`))
+        await mkdirp(path.join(__dirname, `../../Факультеты/${faculty[0]}`))
 
         await Promise.all(faculty[1].map(async (student, index) =>{
-            await mkdirp(path.join(__dirname, `Факультеты/${faculty[0]}/${abr[faculty[0]]}-${index + 1}`))
+            await mkdirp(path.join(__dirname, `../../Факультеты/${faculty[0]}/${abr[faculty[0]]}-${index + 1}`))
             try{
-                fs.writeFile(path.join(__dirname, `Факультеты/${faculty[0]}/${abr[faculty[0]]}-${index + 1}/${student.indexName}.txt`), printStudent(student), function (err) {
+                fs.writeFile(path.join(__dirname, `../../Факультеты/${faculty[0]}/${abr[faculty[0]]}-${index + 1}/${student.indexName}.txt`), printStudent(student), function (err) {
                     if (err) throw err;
                 });
             } catch(err){
@@ -108,8 +108,18 @@ function testLinks() {
             testLinks()
         }, 300)
     }   
-
+    let progress = document.getElementById('progress');
+    let percent = downloaded / motivationLinks.length * 100
+    progress.setAttribute('aria-valuenow', `${ percent }`);
+    progress.style.width = `${ percent }%`;
     console.log(`${ downloaded / motivationLinks.length * 100 } %`)
+    if(percent === 100) {
+        console.log('finish');
+        document.getElementById('done').classList.remove('hidden');
+        document.getElementById('doneFolder').innerHTML = `Путь к папкам факультетов: ${path.join(__dirname, '../../Факультеты')}`;
+        document.getElementById('error').innerHTML = '';
+        document.getElementById('startButton').disabled = false;
+    }
 }
 
 
@@ -184,7 +194,7 @@ async function getMotivationFile(id, link, fac, studentName, index, indexName, i
     if(name) {
         await waitFor(1000);
         // await mkdirp(path.join(__dirname, `Test/${fac}`))
-        let test = fs.createWriteStream(`./Факультеты/${fac}/${abr[fac]}-${index + 1}/${name}`)
+        let test = fs.createWriteStream(path.join(__dirname, `../../Факультеты/${fac}/${abr[fac]}-${index + 1}/${name}`))
         try {
             const res = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`, {
                 method: 'GET',
@@ -226,17 +236,12 @@ async function addFacultyFolder(obj) {
     if (id.length) {
         try {
             await accessSpreadsheet(id);
-            console.log('finish');
-            document.getElementById('done').classList.remove('hidden');
-            document.getElementById('doneFolder').innerHTML = `Путь к папкам факультетов: ${path.join(__dirname, '../../Факультеты')}`;
-            document.getElementById('error').innerHTML = '';
         } catch (err) {
             document.getElementById('error').innerHTML = err;
         }
     } else {
         console.log('err');
     }
-    obj.disabled = false;
 
 }
 

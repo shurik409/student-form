@@ -9,13 +9,30 @@
         <link rel="stylesheet" href="./style.css">
     </head>
     <body>
-        <p>Вставьте ссылку на таблицу с включённым режимом общего просмотра</p>
-        <input id="link">
-        <button onclick="addFacultyFolder(this)">Start</button>
-        <div>
-            <h1 id='done' class="hidden">Всё готово!</h1>
-            <p id='doneFolder'></p>
-            <p id='error'></p>
+        <div class="container mt-5 text-center">
+            <div class="row">
+                <div class="col-md-12">
+                    <p>Откройте доступ к папке, где лежат мотивационные письма, для почты: </P>
+                    <p>sheets-405@vk-bot-fotovelo.iam.gserviceaccount.com</p>
+                    <p>Вставьте ссылку на таблицу с включённым режимом общего просмотра</p>
+                    <!-- <input id="link"> -->
+                    <div class="input-group mb-3">
+                        <input type="text" id="link" class="form-control" placeholder="Ссылка на таблицу" aria-label="Ссылка на таблицу" aria-describedby="button-addon2">
+                        <div class="input-group-append">
+                            <button onclick="addFacultyFolder(this)" class="btn btn-outline-secondary" type="button" id="button-addon2 startButton">Start</button>
+                        </div>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar" id='progress' role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <!-- <button onclick="addFacultyFolder(this)">Start</button> -->
+                    <div>
+                        <h1 id='done' class="hidden">Всё готово!</h1>
+                        <p id='doneFolder'></p>
+                        <p id='error'></p>
+                    </div>
+                </div>
+            </div>
         </div>
         <script>
             require('./render.js');
