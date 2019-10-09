@@ -57,9 +57,9 @@ async function accessSpreadsheet(id) {
         await mkdirp(path.join(__dirname, `../../Факультеты/${faculty[0]}`))
 
         await Promise.all(faculty[1].map(async (student, index) =>{
-            await mkdirp(path.join(__dirname, `../../Факультеты/${faculty[0]}/${abr[faculty[0]]}-${index + 1}`))
+            await mkdirp(path.join(__dirname, `../../Факультеты/${faculty[0]}/`))
             try{
-                fs.writeFile(path.join(__dirname, `../../Факультеты/${faculty[0]}/${abr[faculty[0]]}-${index + 1}/${student.indexName}.txt`), printStudent(student), function (err) {
+                fs.writeFile(path.join(__dirname, `../../Факультеты/${faculty[0]}/${student.indexName}.txt`), printStudent(student), function (err) {
                     if (err) throw err;
                 });
             } catch(err){
@@ -135,7 +135,7 @@ function printLink(links) {
 }
 
 function printStudent(student) {
-    const {name, link, phone, school, city, faculty, speciality, studyBefore, whichFaculty, motivationLink, mail} = student;
+    const { name, link, phone, school, city, faculty, speciality, studyBefore, whichFaculty, motivationLink, mail } = student;
     return `Имя: ${name}
     Ссылка на соц.сеть: ${link}
     Телефон: ${phone}
@@ -190,11 +190,11 @@ async function getFile(link, fac, name, index, indexName, indexLink) {
 
 async function getMotivationFile(id, link, fac, studentName, index, indexName, indexLink) {
     let token = await auth.getAccessToken();
-    let name = await getFileName(id, `Мотивация-${indexLink + 1}`);
+    let name = await getFileName(id, `${indexName}-${indexLink + 1}`);
     if(name) {
         await waitFor(1000);
         // await mkdirp(path.join(__dirname, `Test/${fac}`))
-        let test = fs.createWriteStream(path.join(__dirname, `../../Факультеты/${fac}/${abr[fac]}-${index + 1}/${name}`))
+        let test = fs.createWriteStream(path.join(__dirname, `../../Факультеты/${fac}/${name}`))
         try {
             const res = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`, {
                 method: 'GET',
